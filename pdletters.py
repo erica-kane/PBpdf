@@ -1,6 +1,6 @@
 import re
 from datetime import datetime
-import gender_guesser.detector as gender
+import datefinder
 
 # Create function that reads the letter and returns it as a string 
 def readletter(lettertext):
@@ -110,6 +110,16 @@ def get_decision(letter):
     return split
 
 get_decision(split_norel)
+
+# Date of hearing 
+# regex for 2 numbers slash 4 numbers 
+pattern = re.compile(r'\d{2}\/\d{4}')
+pattern.findall(split_rel[1])
+
+
+# Previous hearing 
+
+
 
 
 
