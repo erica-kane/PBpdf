@@ -1,5 +1,6 @@
 import re
 from datetime import datetime
+import gender_guesser.detector as gender
 
 # Create function that reads the letter and returns it as a string 
 def readletter(lettertext):
@@ -63,20 +64,14 @@ def remove_name(letter):
     second_split = first_split.split('Decision')[0].strip()
     full_name = second_split.split(' ',1)[1]
 
-    if full_name[-1] != 's':
-        noapos_letter = letter.replace("'s",'')
-    else:
-        noapos_letter = letter.replace("'",'')
-
-    no_name_letter1 = noapos_letter.replace(full_name, 'X')
+    no_name_letter1 = letter.replace(full_name, 'X')
     no_name_letter2 = no_name_letter1.replace(full_name.split()[0], 'X')
     no_name_letter3 = no_name_letter2.replace(full_name.split()[1], 'X')
     
     return no_name_letter3
 
-remove_name(rel_date)
-
-
+rel_anon = remove_name(rel_date)
+norel_anon = remove_name(norel_date)
 
 # Split string into sections (header, introudction, sentence details, risk assessment, decision)
 def split_letter_sections(letter):
@@ -84,12 +79,39 @@ def split_letter_sections(letter):
     section_letter = split_letter.split('\n')
     return section_letter
 
-split_rel = split_letter_sections(releaseletter)
-split_norel = split_letter_sections(noreleaseletter)
+split_rel = split_letter_sections(rel_anon)
+split_norel = split_letter_sections(norel_anon)
 
 
 # Use title for gender 
-# Decision regex 
+def get_gender(letter):
+    title_female = ['Miss', 'Mrs', 'Ms']
+    title_male = ['Mr', 'Master']
+    eg = letter[0]
+    split1 = eg.split(':',1)[1]
+    split2 = split1.split('Decision',1)[0].strip().split()[0]
+
+    for title in title_female:
+        if split2 == title:
+            gender = 'female'
+        else: 
+            for title in title_male:
+                if split2 == title:
+                    gender = 'male'
+
+    return gender
+
+get_gender(split_rel)
+
+# Decision
+def get_decision(letter):
+    eg = letter[0]
+    split = eg.split('Decision:',1)[1].strip()
+    return split
+
+get_decision(split_norel)
+
+
 
 
 
