@@ -59,6 +59,23 @@ norel_date = replace_dates(noreleaseletter)
 # Remove all examples of name but keep title 
 # Regex for everything between 'Name: title' and 'Decision:'
 def remove_name(letter):
+    first_split = letter.split(":",1)[1]
+    second_split = first_split.split('Decision')[0].strip()
+    full_name = second_split.split(' ',1)[1]
+
+    if full_name[-1] != 's':
+        noapos_letter = letter.replace("'s",'')
+    else:
+        noapos_letter = letter.replace("'",'')
+
+    no_name_letter1 = noapos_letter.replace(full_name, 'X')
+    no_name_letter2 = no_name_letter1.replace(full_name.split()[0], 'X')
+    no_name_letter3 = no_name_letter2.replace(full_name.split()[1], 'X')
+    
+    return no_name_letter3
+
+remove_name(rel_date)
+
 
 
 # Split string into sections (header, introudction, sentence details, risk assessment, decision)
