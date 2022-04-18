@@ -138,7 +138,7 @@ def vps(letter):
 
 vps(split_rel)
 
-# Sentence type
+# Crime type
 # Corpus of crime types?
 
 # Sentence date 
