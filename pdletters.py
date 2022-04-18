@@ -113,11 +113,44 @@ get_decision(split_norel)
 
 # Date of hearing 
 # regex for 2 numbers slash 4 numbers 
-pattern = re.compile(r'\d{2}\/\d{4}')
-pattern.findall(split_rel[1])
+def get_hearing_dates(letter):
+    pattern = re.compile(r'\d{2}\/\d{4}')
+    letter_section = letter[1]
+    return pattern.findall(letter_section)
 
+get_hearing_dates(split_norel)
 
 # Previous hearing 
+# When you create dataframe use this variable to create date of current hearing,
+# if there was a previous hearing, 
+# and previous hearing date 
+
+# Victim Personal Statement 
+def vps(letter):
+    pattern = re.compile(r'[Vv]ictim [Pp]ersonal [Ss]tatement|VPS')
+    letter_section = letter[1]
+    eg = pattern.findall(letter_section)
+    if len(eg) != 0:
+        vps = 'yes'
+    else:
+        vps = 'no'
+    return vps
+
+vps(split_rel)
+
+# Sentence type
+# Corpus of crime types?
+
+# Sentence date 
+# First date 
+
+# Sentence length 
+# 
+
+# Length of time in prison 
+# 
+
+
 
 
 
