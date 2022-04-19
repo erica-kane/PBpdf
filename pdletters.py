@@ -58,7 +58,6 @@ rel_date = replace_dates(releaseletter)
 norel_date = replace_dates(noreleaseletter)
 
 # Remove all examples of name but keep title 
-# Regex for everything between 'Name: title' and 'Decision:'
 def remove_name(letter):
     first_split = letter.split(":",1)[1]
     second_split = first_split.split('Decision')[0].strip()
