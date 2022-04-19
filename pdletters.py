@@ -137,17 +137,47 @@ def vps(letter):
 
 vps(split_rel)
 
-# Crime type
-# Corpus of crime types?
+# Offence type(s)
+# Corpus of offence types?
+
 
 # Sentence date 
 # First date 
+def get_conviction_dates(letter):
+    pattern = re.compile(r'\d{2}\/\d{4}')
+    letter_section = letter[2]
+    date_list = pattern.findall(letter_section)
+    return date_list[0]
 
-# Sentence length 
-# 
+get_conviction_dates(split_norel)
 
-# Length of time in prison 
-# 
+# Sentence type(s) 
+# This should be able to be hard coded as there shouldn't be a huge variety of sentence types 
+def get_sentence_type(letter):
+    types = []
+
+    if 'life sentence' in letter[2].lower():
+        types.append('life')
+    
+    if 'determinate' in letter[2].lower():
+        types.append('determinate')
+
+    if 'indeterminate' in letter[2].lower():
+        types.append('indeterminate')
+
+    # Add more as necessary
+
+    return types
+
+get_sentence_type(split_rel)
+
+#  Multiple sentences 
+# Len of get_sentence_type
+
+
+
+
+
 
 
 
