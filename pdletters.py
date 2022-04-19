@@ -1,6 +1,8 @@
 import re
+import pandas as pd
 from datetime import datetime
 import datefinder
+import numpy as np
 
 # Create function that reads the letter and returns it as a string 
 def readletter(lettertext):
@@ -25,21 +27,7 @@ def removefooter(letter):
 releaseletter = removefooter(releaseletter)
 noreleaseletter = removefooter(noreleaseletter)
 
-# Information to extract:
-
-# From header - 
-# Name (remove)
-# Gender
-# Decision 
-
-# From Introduction - 
-# Date of hearing(s) 
-# Victim personal statement 
-
-# From Sentence details - 
-# Sentence type(s)
-# Sentence length(s)
-
+# ANONYMISATION
 # Replace Months and Years with numeric dates 
 date_regex = re.compile(r"(\b\d{1,2}\D{0,3})?\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|(Nov|Dec)(?:ember)?)\D?(\d{1,2}\D?)?\D?((19[7-9]\d|20\d{2})|\d{2})")
 
@@ -72,108 +60,90 @@ def remove_name(letter):
 rel_anon = remove_name(rel_date)
 norel_anon = remove_name(norel_date)
 
-# Split string into sections (header, introudction, sentence details, risk assessment, decision)
-def split_letter_sections(letter):
-    split_letter = 'HEADER ' + letter.replace('INTRODUCTION', '\nINTRODUCTION').replace('SENTENCE DETAILS', '\nSENTENCE DETAILS').replace('RISK ASSESSMENT', '\nRISK ASSESSMENT').replace('DECISION', '\nDECISION')
-    section_letter = split_letter.split('\n')
-    return section_letter
 
-split_rel = split_letter_sections(rel_anon)
-split_norel = split_letter_sections(norel_anon)
+# EXTRACTION
 
+def extract_letter_info(full_letter):
+    # Divide letter into sections
+    split_letter = 'HEADER ' + full_letter.replace('INTRODUCTION', '\nINTRODUCTION').replace('SENTENCE DETAILS', '\nSENTENCE DETAILS').replace('RISK ASSESSMENT', '\nRISK ASSESSMENT').replace('DECISION', '\nDECISION')
+    letter = split_letter.split('\n')
 
-# Use title for gender 
-def get_gender(letter):
+    # Define required objects to be used throughout function 
     title_female = ['Miss', 'Mrs', 'Ms']
     title_male = ['Mr', 'Master']
-    eg = letter[0]
-    split1 = eg.split(':',1)[1]
-    split2 = split1.split('Decision',1)[0].strip().split()[0]
+    section_0 = letter[0]
+    section_1 = letter[1]
+    section_2 = letter[2]
+    pattern_date = re.compile(r'\d{2}\/\d{4}')
+    pattern_vps = re.compile(r'[Vv]ictim [Pp]ersonal [Ss]tatement|VPS')
+    types = []
 
+    # Save gender value
+    split1 = section_0.split(':',1)[1]
+    split2 = split1.split('Decision',1)[0].strip().split()[0]
     for title in title_female:
         if split2 == title:
-            gender = 'female'
+            gender = 'Female'
         else: 
             for title in title_male:
                 if split2 == title:
-                    gender = 'male'
+                    gender = 'Male'
 
-    return gender
+    # Decision
+    decision = section_0.split('Decision:',1)[1].strip()
 
-get_gender(split_rel)
+    # Date of current hearing
+    hearing_dates = pattern_date.findall(section_1)
+    date_of_hearing = hearing_dates[0]
 
-# Decision
-def get_decision(letter):
-    eg = letter[0]
-    split = eg.split('Decision:',1)[1].strip()
-    return split
-
-get_decision(split_norel)
-
-# Date of hearing 
-# regex for 2 numbers slash 4 numbers 
-def get_hearing_dates(letter):
-    pattern = re.compile(r'\d{2}\/\d{4}')
-    letter_section = letter[1]
-    return pattern.findall(letter_section)
-
-get_hearing_dates(split_norel)
-
-# Previous hearing 
-# When you create dataframe use this variable to create date of current hearing,
-# if there was a previous hearing, 
-# and previous hearing date 
-
-# Victim Personal Statement 
-def vps(letter):
-    pattern = re.compile(r'[Vv]ictim [Pp]ersonal [Ss]tatement|VPS')
-    letter_section = letter[1]
-    eg = pattern.findall(letter_section)
-    if len(eg) != 0:
-        vps = 'yes'
+    # Multiple hearings? 
+    if len(hearing_dates) == 1:
+        hearing_amount = 'No'
+    elif len(hearing_dates) >1:
+        hearing_amount = 'Yes'
     else:
-        vps = 'no'
-    return vps
+        hearing_amount = np.nan 
 
-vps(split_rel)
+    # Previous hearing(s) date
+    if len(hearing_dates) == 1:
+        prev_hearing_dates = 'No previous hearing'
+    elif len(hearing_dates) > 1 :
+        prev_hearing_dates = hearing_dates[1:]
+    else:
+        prev_hearing_dates = np.nan
 
-# Offence type(s)
-# Corpus of offence types?
+    # VPS
+    vps_eg = pattern_vps.findall(section_1)
+    if len(vps_eg) != 0:
+        vps = 'Yes'
+    else:
+        vps = 'No'
 
+    # Sentence date
+    sentence_date = pattern_date.findall(section_2)[0]
 
-# Sentence date 
-# First date 
-def get_conviction_dates(letter):
-    pattern = re.compile(r'\d{2}\/\d{4}')
-    letter_section = letter[2]
-    date_list = pattern.findall(letter_section)
-    return date_list[0]
-
-get_conviction_dates(split_norel)
-
-# Sentence type(s) 
-# This should be able to be hard coded as there shouldn't be a huge variety of sentence types 
-def get_sentence_type(letter):
-    types = []
-
+    # Sentence type
     if 'life sentence' in letter[2].lower():
         types.append('life')
-    
     if 'determinate' in letter[2].lower():
         types.append('determinate')
-
     if 'indeterminate' in letter[2].lower():
         types.append('indeterminate')
-
     # Add more as necessary
+    sentence_type = types
 
-    return types
+    data = {'Gender': gender, 'Decision': decision, 'Hearing_date': date_of_hearing, \
+        'Multiple_hearings': hearing_amount, 'Previous_hearing_date': prev_hearing_dates, \
+        'VPS': vps, 'Conviction_date': sentence_date, 'Sentence_type': sentence_type}
 
-get_sentence_type(split_rel)
+    return data
 
-#  Multiple sentences 
-# Len of get_sentence_type
+all_letters = [rel_date, norel_date]
 
+def turn_into_df(letter_list):
+    results = [extract_letter_info(letter) for letter in letter_list]
+    data = pd.DataFrame.from_records(results)
+    return data
 
 
 
